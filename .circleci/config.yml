@@ -5,7 +5,7 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  say-hello:
+  save-inventory:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
@@ -14,13 +14,28 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - target/inventory
+  call-inventory:
+      # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
+      # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
+      docker:
+        - image: cimg/base:stable
+      steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace 
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
-
+          name: "Add IP to inventory"
+          command: aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Project,Values=udacity" --output text >> inventory"     
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   say-hello-workflow:
     jobs:
-      - say-hello
+      - save-inventory
+      - call-inventory:
+          requires:
+            - save-inventory

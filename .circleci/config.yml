@@ -6,6 +6,19 @@ orbs:
    aws-cli: circleci/aws-cli@2.0.3
 # Define the jobs we want to run for this project
 jobs:
+  save_to_inventory:
+    docker: 
+      - image: circleci/node:13.8
+    steps:
+      - checkout
+      - run:
+          name: save IP Adress to inventory
+          command: |
+            aws ec2 describe-instances \
+    \
+        --query 'Reservations[*].Instances[*].PublicIpAddress' \
+      --filters "Name=tag:Project,Values=udacity" \
+      --output text >> inventory 
   create_infrastructure: 
       docker:
         - image: amazon/aws-cli
@@ -20,12 +33,12 @@ jobs:
                 --region us-east-1
   configure_infrastructure:
       docker:
-        - image: python:3.7-alpine3.17
+        - image: python:3.7-alpine3.11
       steps:
         - checkout
         - add_ssh_key: 
-            fingerprint: ["8e:29:93:65:70:39:4d:ab:f5:57:fb:36:66:4e:bf:d1"]
-        run:
+            fingerprint: ["59:ec:13:aa:13:d2:18:41:8d:ff:15:e7:56:09:fd:23"]
+        - run:
           name: Install dependencies
           command: |
             apk add --update ansible
@@ -33,10 +46,14 @@ jobs:
         - run:
           name: Configure server
           command: |
-            andible-playbook -i inventory main.yml    
+            ansible-playbook -i inventory main.yml
 # Sequential workflow
 workflows:
   # Name the workflow
   myWorkflow:
     jobs:
       - create_infrastructure
+      - configure_infrastructure:
+          requires:
+            - create_infrastructure
+      - save_to_inventory

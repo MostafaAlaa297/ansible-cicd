@@ -6,13 +6,6 @@ orbs:
    aws-cli: circleci/aws-cli@2.0.3
 # Define the jobs we want to run for this project
 jobs:
-  save_to_inventory:
-    docker: 
-      - image: circleci/node:13.8
-    steps:
-      - checkout
-      - run: 
-          aws ec2 describe-instances \ --query 'Reservations[*].Instances[*].PublicIpAddress' \ --filters "Name=tag:Project,Values=udacity" \ --output text >> inventory 
   create_infrastructure: 
       docker:
         - image: amazon/aws-cli
@@ -25,32 +18,29 @@ jobs:
                 --template-file template.yml \
                 --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
                 --region us-east-1
-  configure_infrastructure:
-      docker:
-        - image: python:3.7-alpine3.11
-      steps:
-        - checkout
-        - add_ssh_keys: 
-            fingerprints: ["59:ec:13:aa:13:d2:18:41:8d:ff:15:e7:56:09:fd:23"]
-        - run:
-            name: Install dependencies
-            command: |
-              apk add --update ansible
+  # configure_infrastructure:
+  #     docker:
+  #       - image: python:3.7-alpine3.11
+  #     steps:
+  #       - checkout
+  #       - add_ssh_keys: 
+  #           fingerprints: ["59:ec:13:aa:13:d2:18:41:8d:ff:15:e7:56:09:fd:23"]
+  #       - run:
+  #           name: Install dependencies
+  #           command: |
+  #             apk add --update ansible
 
-        - run:
-            name: Configure server
-            command: |
-              ansible-playbook -i inventory main.yml
+  #       - run:
+  #           name: Configure server
+  #           command: |
+  #             ansible-playbook -i inventory main.yml
 # Sequential workflow
 workflows:
   # Name the workflow
   myWorkflow:
     jobs:
-      - save_to_inventory
-      - create_infrastructure:
-          requires: 
-            - save_to_inventory
-      - configure_infrastructure:
-          requires:
-            - create_infrastructure
+      - create_infrastructure
+      # - configure_infrastructure:
+      #     requires:
+      #       - create_infrastructure
       

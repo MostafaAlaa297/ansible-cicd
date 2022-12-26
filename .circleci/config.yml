@@ -18,6 +18,22 @@ jobs:
                 --template-file template.yml \
                 --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
                 --region us-east-1
+  configure_infrastructure:
+      docker:
+        - image: python:3.7-alpine3.17
+      steps:
+        - checkout
+        - add_ssh_key: 
+            fingerprint: ["8e:29:93:65:70:39:4d:ab:f5:57:fb:36:66:4e:bf:d1"]
+        run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+
+        - run:
+          name: Configure server
+          command: |
+            andible-playbook -i inventory main.yml    
 # Sequential workflow
 workflows:
   # Name the workflow

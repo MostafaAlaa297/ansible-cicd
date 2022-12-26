@@ -70,5 +70,5 @@ workflows:
       # - configure_infrastructure:
           # requires:
             # - create_infrastructure
-      - save_to_inventory
+      # - save_to_inventory
       - smoke_test

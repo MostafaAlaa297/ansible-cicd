@@ -28,12 +28,11 @@ jobs:
         - run:
             name: Install dependencies
             command: |
-              apk add --update ansible
-
+              apk add --update ansible 
         - run:
             name: Configure server
             command: |
-              ansible-playbook -i inventory main.yml 
+              ansible-playbook -i inventory main.yml
 # Sequential workflow
 workflows:
   # Name the workflow
